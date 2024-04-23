@@ -22,7 +22,7 @@ local spawnPoints = {
 
 }
 
-local exampleArea1 = BoxZone:Create(vector3(323.33282470703, -214.51341247559, 54.08618927002), 25.0, 25.0, { -- 25.0, 25.0 is length and width of the box zone adjust to your needs, i'd suggest making it 2x or 3x bigger than the area you're spawning just so items do appear out of nowhere
+local exampleArea1Zone = BoxZone:Create(vector3(323.33282470703, -214.51341247559, 54.08618927002), 25.0, 25.0, { -- 25.0, 25.0 is length and width of the box zone adjust to your needs, i'd suggest making it 2x or 3x bigger than the area you're spawning just so items do appear out of nowhere
     name="exampleArea1",
     heading = 336.55322265625,
     minZ = 52.08618927002,
@@ -30,7 +30,7 @@ local exampleArea1 = BoxZone:Create(vector3(323.33282470703, -214.51341247559, 5
     debugPoly=false,
 })
 
-local exampleArea2 = BoxZone:Create(vector3(-468.06741333008, -56.979221343994, 44.513347625732), 25.0, 25.0, {
+local exampleArea2Zone = BoxZone:Create(vector3(-468.06741333008, -56.979221343994, 44.513347625732), 25.0, 25.0, {
     name="exampleArea2",
     heading = 55.118343353271,
     minZ = 42.513347625732,
@@ -39,8 +39,8 @@ local exampleArea2 = BoxZone:Create(vector3(-468.06741333008, -56.979221343994, 
 })
 
 local areas = {
-    exampleArea1 = exampleArea1,
-    exampleArea2 = exampleArea2,
+    exampleArea1 = exampleArea1Zone,
+    exampleArea2 = exampleArea2Zone,
 }
 
 RegisterNetEvent('lynx_lootzones:spawnPropsInPaletoSafeZone')
