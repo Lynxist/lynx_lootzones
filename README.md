@@ -11,3 +11,5 @@ Because of HRS loot deleting objects once they've been looted hrs loot removes t
 I've only just uploading the way I use it currently, I'll remove that soon and set up an example zone.
 
 If you're having trouble setting up a zone just lmk
+
+[Lynxist Mods Discord](https://discord.gg/ewJEs8E9ak)
