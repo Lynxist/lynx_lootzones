@@ -43,27 +43,6 @@ local areas = {
     exampleArea2 = exampleArea2,
 }
 
-local exampleArea1 = BoxZone:Create(vector3(323.33282470703, -214.51341247559, 54.08618927002), 25.0, 25.0, {
-    name="exampleArea1",
-    heading = 336.55322265625,
-    minZ = 52.08618927002,
-    maxZ = 56.08618927002,
-    debugPoly=false,
-})
-
-local exampleArea2 = BoxZone:Create(vector3(-468.06741333008, -56.979221343994, 44.513347625732), 25.0, 25.0, {
-    name="exampleArea2",
-    heading = 55.118343353271,
-    minZ = 42.513347625732,
-    maxZ = 46.513347625732,
-    debugPoly=false,
-})
-
-local areas = {
-    exampleArea1 = exampleArea1,
-    exampleArea2 = exampleArea2,
-}
-
 RegisterNetEvent('lynx_lootzones:spawnPropsInPaletoSafeZone')
 AddEventHandler('lynx_lootzones:spawnPropsInPaletoSafeZone', function()
     TriggerEvent('requestSpawnProps', 'PaletoSafeZone')
