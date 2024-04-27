@@ -1,4 +1,4 @@
-local spawnedProps = {} -- Maintain a table to store spawned prop objects
+local spawnedProps = {}
 local propCounter = 0
 local currentZone = ""
 
@@ -130,6 +130,16 @@ local function DespawnProps(zoneName)
     end
 end
 
+local function shuffleTable(t)
+    local n = #t
+    while n > 1 do
+        local k = math.random(n)
+        t[n], t[k] = t[k], t[n]
+        n = n - 1
+    end
+    return t
+end
+
 local function SpawnProps(zoneName)
     local points = spawnPoints[zoneName]
     if not points then
@@ -137,14 +147,22 @@ local function SpawnProps(zoneName)
         return
     end
 
+    shuffleTable(points)
+
+    local propsSpawned = 0
     for _, point in pairs(points) do
         if not point.chosen and shouldSpawn(point.spawnChance) then
+            if Config.enableMaxProps and propsSpawned >= Config.maxProps then
+                break
+            end
+
             local propId = point.prop .. "_" .. point.coords.x .. "_" .. point.coords.y .. "_" .. point.coords.z
             local prop = CreateObject(GetHashKey(point.prop), point.coords.x, point.coords.y, point.coords.z, true, true, true)
             SetEntityHeading(prop, point.coords.w)
             FreezeEntityPosition(prop, true)
             spawnedProps[propId] = prop
             point.chosen = true
+            propsSpawned = propsSpawned + 1
         end
     end
 end
