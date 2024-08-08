@@ -1,117 +1,94 @@
 local spawnedProps = {}
 local propCounter = 0
 local currentZone = ""
+local areas = areas or {}
+local spawnPoints = spawnPoints or {}
 
-local spawnPoints = {
-    
-    exampleArea1 = { -- spawnChance = 1.0 will spawn the items 100% of the time so you can set your individual chance of each one spawning 
-        {prop = "prop_cash_case_01", coords = vector4(331.70751953125, -215.68487548828, 54.086318969727, 228.74983215332), chosen = false, spawnChance = 0.1},
-        {prop = "prop_crate_01a", coords = vector4(335.28161621094, -209.70533752441, 54.086318969727, 326.85119628906), chosen = false, spawnChance = 0.5},
-        {prop = "prop_crate_01a", coords = vector4(331.86953735352, -206.45750427246, 54.086315155029, 42.112773895264), chosen = false, spawnChance = 0.5},
-        {prop = "prop_crate_01a", coords = vector4(324.82968139648, -207.65657043457, 54.086307525635, 95.828804016113), chosen = false, spawnChance = 0.5},
-        {prop = "prop_crate_01a", coords = vector4(320.1201171875, -213.07258605957, 54.087089538574, 132.46125793457), chosen = false, spawnChance = 0.5},
-        {prop = "prop_crate_01a", coords = vector4(315.1311340332, -204.4298248291, 54.086311340332, 31.616144180298), chosen = false, spawnChance = 0.5},
-        {prop = "prop_crate_01a", coords = vector4(309.53094482422, -217.14372253418, 58.014095306396, 154.29228210449), chosen = false, spawnChance = 0.5},
-        {prop = "prop_cash_case_01", coords = vector4(314.20846557617, -218.64999389648, 58.019229888916, 250.05809020996), chosen = false, spawnChance = 0.1}, 
-    },
+function initializeZones()
+    for zoneName, zoneData in pairs(Config.zoneInfo) do
+        createZone(zoneName, zoneData)
+    end
+end
 
-    exampleArea2 = {
-        {prop = "prop_cash_case_01", coords = vector4(-463.82418823242, -53.164043426514, 43.515449523926, 333.9384765625), chosen = false, spawnChance = 0.5},
-        {prop = "prop_cash_case_01", coords = vector4(-468.12646484375, -60.379241943359, 43.5133934021, 144.77444458008), chosen = false, spawnChance = 0.5},
-    },
+function createZone(zoneName, zoneData)
+    local polyInfo = zoneData.polyInfo
+    local props = zoneData.props
+    local zone
 
-}
+    if polyInfo then
+        if polyInfo.type == "box" then
+            zone = BoxZone:Create(polyInfo.coords, polyInfo.length, polyInfo.width, {
+                name = zoneName,
+                heading = polyInfo.heading,
+                minZ = polyInfo.minZ,
+                maxZ = polyInfo.maxZ,
+                debugPoly = polyInfo.debug
+            })
+        elseif polyInfo.type == "circle" then
+            zone = CircleZone:Create(polyInfo.coords, polyInfo.radius, {
+                name = zoneName,
+                minZ = polyInfo.minZ,
+                maxZ = polyInfo.maxZ,
+                debugPoly = polyInfo.debug
+            })
+        elseif polyInfo.type == "custom" then
+            zone = PolyZone:Create(polyInfo.coords, {
+                name = zoneName,
+                minZ = polyInfo.minZ,
+                maxZ = polyInfo.maxZ,
+                debugPoly = polyInfo.debug
+            })
+        else
+            if Config.enableDebug then
+                print("Invalid zone type specified:", polyInfo.type)
+            end
+            return
+        end
+    else
+        zone = {name = zoneName}
+        if Config.enableDebug then
+            print("Handling zone without polyInfo:", zoneName)
+        end
+    end
 
-local exampleArea1Zone = BoxZone:Create(vector3(323.33282470703, -214.51341247559, 54.08618927002), 25.0, 25.0, { -- 25.0, 25.0 is length and width of the box zone adjust to your needs, i'd suggest making it 2x or 3x bigger than the area you're spawning just so items do appear out of nowhere
-    name="exampleArea1",
-    heading = 336.55322265625,
-    minZ = 52.08618927002,
-    maxZ = 59.08618927002,
-    debugPoly=false,
-})
+    areas[zoneName] = zone
+    spawnPoints[zoneName] = props
 
-local exampleArea2Zone = BoxZone:Create(vector3(-468.06741333008, -56.979221343994, 44.513347625732), 25.0, 25.0, {
-    name="exampleArea2",
-    heading = 55.118343353271,
-    minZ = 42.513347625732,
-    maxZ = 46.513347625732,
-    debugPoly=false,
-})
+    local function onPointInOut(isPointInside, point, lastPoint)
+        if isPointInside then
+            if Config.enableDebug then
+                print("Entering zone:", zoneName)
+            end
+            TriggerEvent('lynx_lootzones:requestSpawnProps', zoneName)
+        else
+            if Config.enableDebug then
+                print("Leaving zone:", zoneName)
+            end
+            TriggerEvent('lynx_lootzones:despawnProps', zoneName)
+        end
+    end
 
-local areas = {
-    exampleArea1 = exampleArea1Zone,
-    exampleArea2 = exampleArea2Zone,
-}
+    if polyInfo then
+        zone:onPointInOut(PolyZone.getPlayerPosition, onPointInOut)
+    else
+        if Config.enableDebug then
+            print("Zone doesn't exist:", zoneName)
+        end
+    end
+end
 
-RegisterNetEvent('lynx_lootzones:spawnPropsInPaletoSafeZone')
-AddEventHandler('lynx_lootzones:spawnPropsInPaletoSafeZone', function()
-    TriggerEvent('requestSpawnProps', 'PaletoSafeZone')
-end)
-
-RegisterNetEvent('lynx_lootzones:despawnPropsInPaletoSafeZone')
-AddEventHandler('lynx_lootzones:despawnPropsInPaletoSafeZone', function()
-    TriggerEvent('despawnProps', 'PaletoSafeZone')
-end)
-
-RegisterCommand('zzone', function()
-    print(currentZone)
-end)
+initializeZones()
 
 local function shouldSpawn(chance)
     return math.random() <= chance
 end
 
--- Citizen.CreateThread(function()
---     while true do
---         local plyPed = PlayerPedId()
---         local coord = GetEntityCoords(plyPed)
-        
---         for zoneName, polyZone in pairs(areas) do
---             if polyZone:isPointInside(coord) then
---                 TriggerEvent('requestSpawnProps', zoneName)
---             end
---         end
-        
---         Citizen.Wait(500)
---     end
--- end)
-
-Citizen.CreateThread(function()
-    while true do
-        local plyPed = PlayerPedId()
-        local coord = GetEntityCoords(plyPed)
-        local newZone = ""
-
-        for zoneName, polyZone in pairs(areas) do
-            if polyZone:isPointInside(coord) then
-                newZone = zoneName
-                break
-            end
-        end
-
-        if newZone ~= currentZone then
-            if currentZone ~= "" then
-                print("Leaving zone:", currentZone)
-                TriggerEvent('despawnProps', currentZone)
-            end
-
-            if newZone ~= "" then
-                print("Entering zone:", newZone)
-                TriggerEvent('requestSpawnProps', newZone)
-            end
-
-            currentZone = newZone
-        end
-
-        Citizen.Wait(500)
-    end
-end)
-
-
 local function DespawnProps(zoneName)
     local points = spawnPoints[zoneName]
     if not points then
-        print("Invalid zone specified for despawning loot")
+        if Config.enableDebug then
+            print("Invalid zone specified for despawning loot")
+        end
         return
     end
 
@@ -123,7 +100,9 @@ local function DespawnProps(zoneName)
                 DeleteEntity(propHandle)
                 spawnedProps[propId] = nil
             else
-                print("Prop handle not found or does not exist in game world:", propId)
+                if Config.enableDebug then
+                    print("Prop handle not found or does not exist in game world:", propId)
+                end
             end
             point.chosen = false
         end
@@ -143,7 +122,9 @@ end
 local function SpawnProps(zoneName)
     local points = spawnPoints[zoneName]
     if not points then
-        print("Invalid zone specified for spawning loot")
+        if Config.enableDebug then
+            print("Invalid zone specified for spawning loot")
+        end
         return
     end
 
@@ -167,16 +148,25 @@ local function SpawnProps(zoneName)
     end
 end
 
-RegisterNetEvent('requestSpawnProps')
-AddEventHandler('requestSpawnProps', function(areaName)
-    if areaName then
-        SpawnProps(areaName)
+RegisterNetEvent('lynx_lootzones:requestSpawnProps')
+AddEventHandler('lynx_lootzones:requestSpawnProps', function(zoneName)
+    if zoneName then
+        SpawnProps(zoneName)
+    else
+        if Config.enableDebug then
+            print("No zone name provided")
+        end
     end
 end)
 
-RegisterNetEvent('despawnProps')
-AddEventHandler('despawnProps', function(areaName)
-    if areaName then
-        DespawnProps(areaName)
+RegisterNetEvent('lynx_lootzones:despawnProps')
+AddEventHandler('lynx_lootzones:despawnProps', function(zoneName)
+    if zoneName then
+        DespawnProps(zoneName)
+    else
+        if Config.enableDebug then
+            print("No zone name provided")
+        end
     end
 end)
+
